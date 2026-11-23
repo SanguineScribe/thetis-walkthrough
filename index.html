@@ -23,9 +23,9 @@ body{background:var(--glaze);color:var(--slip);font-family:var(--body);font-size
   image-rendering:pixelated}
 .meander{height:22px;background-repeat:repeat-x;background-size:22px 22px;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' shape-rendering='crispEdges'><path d='M0 20H20V2H4V16H16V6H8V12H12V10' fill='none' stroke='%23b98a45' stroke-width='2' stroke-linecap='square'/></svg>")}
-.cab{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.cab{max-width:1360px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .hud{display:flex;justify-content:space-between;gap:12px;font-family:var(--body);font-weight:600;font-size:16px;color:var(--bronze);letter-spacing:.05em}
-.frame{background:var(--terra);border:4px solid var(--bronze);box-shadow:0 0 0 4px var(--glaze),0 0 0 8px var(--terra-d);padding:6px;min-height:560px}
+.frame{background:var(--terra);border:4px solid var(--bronze);box-shadow:0 0 0 4px var(--glaze),0 0 0 8px var(--terra-d);padding:6px;min-height:620px}
 .inner{background:var(--glaze2);border:4px solid var(--glaze);min-height:540px;padding:26px 28px 28px;display:flex;flex-direction:column;gap:18px}
 .screen{display:flex;flex-direction:column;gap:18px;flex:1}
 h1,h2{font-family:var(--px);font-weight:400;color:var(--clay);margin:0;line-height:1.5;text-wrap:balance}
@@ -47,6 +47,10 @@ p{margin:0}
 .cap{font-family:var(--body);font-weight:600;font-size:17px;color:var(--clay);letter-spacing:.06em;margin-bottom:8px;line-height:1.6}
 .cl .cap{color:var(--terra-d)}
 .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.grid.c4{grid-template-columns:repeat(4,1fr)}
+.grid.c3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:1000px){.grid.c4,.grid.c3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.grid.c4,.grid.c3{grid-template-columns:1fr}}
 .split{display:grid;gap:18px;grid-template-columns:232px 1fr;align-items:start}
 @media(max-width:700px){.split{grid-template-columns:1fr}.inner{padding:18px 16px}}
 .sprite{display:block;margin:0 auto;background:var(--terra);border:4px solid var(--bronze);width:232px;height:272px;image-rendering:pixelated}
@@ -73,8 +77,8 @@ p{margin:0}
 .script>*{flex:none}
 .script .slug{font-weight:700;text-transform:uppercase}
 .script .who{text-align:center;font-weight:700;margin-top:6px}
-.script .line{max-width:420px;margin-inline:auto}
-.script .par{max-width:480px;margin-inline:auto;text-align:center;font-style:italic}
+.script .line{max-width:640px;margin-inline:auto}
+.script .par{max-width:760px;margin-inline:auto;text-align:center;font-style:italic}
 /* sprites */
 .pane{background:var(--terra);border:4px solid var(--bronze);padding:10px 14px;display:flex;gap:10px;align-items:flex-end;flex:none;max-width:100%}
 .pane canvas{display:block;image-rendering:pixelated}
@@ -140,7 +144,7 @@ p{margin:0}
       <button class="tab" role="tab" aria-selected="false" data-p="i2">PLAYER STATEMENTS</button>
     </div>
     <div class="panel" id="i1">
-      <div class="grid">
+      <div class="grid c3">
         <div class="box"><div class="cap">PIRANESI</div>A calm, curious narrator uncovering their own tragedy.</div>
         <div class="box"><div class="cap">CIRCE</div>Transformation as self-discovery, not self-loss.</div>
         <div class="box"><div class="cap">SONG OF THE SEA</div>Meeting a strange world with curiosity instead of fear.</div>
@@ -166,7 +170,7 @@ p{margin:0}
     </div>
     <div class="panel" id="r1">
       <div class="duo"><div class="pane"><canvas class="spr" data-s="theseus" data-sc="6" role="img" aria-label="Pixel sprite of Theseus"></canvas><canvas class="spr" data-s="heart" data-sc="4" style="align-self:center" role="img" aria-label="Pixel heart"></canvas><canvas class="spr" data-s="thetis" data-sc="5" role="img" aria-label="Pixel sprite of Thetis"></canvas></div><p>Slow and steady. She’s spent so long being pursued that she’s wary at first.</p></div>
-      <div class="grid">
+      <div class="grid c4">
         <div class="box"><div class="cap">MEET</div>She takes him for Poseidon’s man. He asks what she wants and offers a place in the group, not a prize.</div>
         <div class="box"><div class="cap">DEVELOPS</div>Small, unglamorous travel moments. He treats her with respect, and she helps him unburden.</div>
         <div class="box"><div class="cap">CONFLICT</div>She senses his hubris heading somewhere dangerous and must choose whether to act.</div>
@@ -176,7 +180,7 @@ p{margin:0}
     </div>
     <div class="panel" id="r2" hidden>
       <div class="duo"><div class="pane"><canvas class="spr" data-s="persephone" data-sc="5" role="img" aria-label="Pixel sprite of Persephone"></canvas><canvas class="spr" data-s="heart" data-sc="4" style="align-self:center" role="img" aria-label="Pixel heart"></canvas><canvas class="spr" data-s="thetis" data-sc="5" role="img" aria-label="Pixel sprite of Thetis"></canvas></div><p>They see themselves in each other, both pushed by forces out of their control.</p></div>
-      <div class="grid">
+      <div class="grid c4">
         <div class="box"><div class="cap">MEET</div>Persephone is furious at the cult and at Thetis’s hiding. Thetis is intimidated by her independence.</div>
         <div class="box"><div class="cap">DEVELOPS</div>Claiming space doesn’t cost empathy. Protecting yourself isn’t weakness.</div>
         <div class="box"><div class="cap">CONFLICT</div>Persephone’s impatience meets Thetis’s longer view of time. They balance each other.</div>
@@ -190,7 +194,7 @@ p{margin:0}
   <section class="screen" data-name="COMBAT" hidden>
     <p class="eyebrow">STAGE 4</p><h2>Combat Themes</h2>
     <div class="duo"><div class="pane"><canvas class="spr" data-s="dragon" data-sc="5" role="img" aria-label="Pixel sprite of a sea dragon"></canvas></div><p>A protector. Her power is dormant and surfaces under specific conditions, since she doesn’t fully know what she can do.</p></div>
-    <div class="grid">
+    <div class="grid c4">
       <div class="box"><div class="cap">BOON AND BANE</div>A surge, a lull, then a surge again.</div>
       <div class="box"><div class="cap">WARNING CALLS</div>“Something’s coming,” just before an attack lands.</div>
       <div class="box"><div class="cap">PREFIGHT BUFFS</div>Foreknowledge gives insight on enemies.</div>
@@ -212,7 +216,7 @@ p{margin:0}
       <button class="tab" role="tab" aria-selected="false" data-p="a3">EXTERNAL ARC</button>
     </div>
     <div class="panel" id="a1">
-      <div class="grid">
+      <div class="grid c4">
         <div class="box"><div class="cap">GOAL</div>Seize agency and stop being a passive observer of her own life.</div>
         <div class="box"><div class="cap">OBSTACLE</div>Her last real choice, refusing a god, was punished. Every choice since feels like the same mistake.</div>
         <div class="box"><div class="cap">STRENGTHS</div>Deep intuition, foreknowledge, fierce protectiveness.</div>
@@ -255,7 +259,7 @@ p{margin:0}
   <!-- 8 MYTHIC -->
   <section class="screen" data-name="MYTHIC THREADS" hidden>
     <div class="hdr"><div><p class="eyebrow">STAGE 7</p><h2>Mythic Threads</h2></div><div class="pane"><canvas class="spr" data-s="argo" data-sc="4" role="img" aria-label="Pixel sprite of the Argo"></canvas></div></div>
-    <div class="grid">
+    <div class="grid c3">
       <div class="box"><div class="cap">SHAPESHIFTER</div>Fire, water, lion, serpent, cuttlefish.</div>
       <div class="box"><div class="cap">FLUID IDENTITY</div>A secondary, shifting figure across her own myths.</div>
       <div class="box"><div class="cap">FOREKNOWLEDGE</div>In the Iliad she knows Achilles will die young and tries anyway.</div>
