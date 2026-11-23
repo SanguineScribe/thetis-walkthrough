@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thetis: A Walkthrough</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: one game screen at a time inside a framed amphora-panel, meander border, bottom bar with BACK / NEXT and a stage tracker.
+   Look: black-figure pottery. Black glaze ground, terracotta field, cream slip, bronze trim. Single committed theme. */
+:root{
+  --glaze:#1a1411; --glaze2:#2a201a; --terra:#a9512c; --terra-d:#7d3a1f;
+  --clay:#d8a56f; --slip:#ecdcbb; --bronze:#b98a45; --ink:#1a1411;
+  --px:'Press Start 2P',ui-monospace,Menlo,Consolas,monospace;
+  --body:'Pixelify Sans',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--glaze);color:var(--slip);font-family:var(--body);font-size:23px;line-height:1.5;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:20px 28px;
+  image-rendering:pixelated}
+.meander{height:22px;background-repeat:repeat-x;background-size:22px 22px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' shape-rendering='crispEdges'><path d='M0 20H20V2H4V16H16V6H8V12H12V10' fill='none' stroke='%23b98a45' stroke-width='2' stroke-linecap='square'/></svg>")}
+.cab{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.hud{display:flex;justify-content:space-between;gap:12px;font-family:var(--body);font-weight:600;font-size:16px;color:var(--bronze);letter-spacing:.05em}
+.frame{background:var(--terra);border:4px solid var(--bronze);box-shadow:0 0 0 4px var(--glaze),0 0 0 8px var(--terra-d);padding:6px;min-height:560px}
+.inner{background:var(--glaze2);border:4px solid var(--glaze);min-height:540px;padding:26px 28px 28px;display:flex;flex-direction:column;gap:18px}
+.screen{display:flex;flex-direction:column;gap:18px;flex:1}
+h1,h2{font-family:var(--px);font-weight:400;color:var(--clay);margin:0;line-height:1.5;text-wrap:balance}
+h1{font-size:clamp(26px,7vw,56px);letter-spacing:.08em;color:var(--slip)}
+h2{font-size:clamp(17px,3.2vw,26px)}
+.eyebrow{font-family:var(--body);font-weight:600;font-size:16px;color:var(--bronze);letter-spacing:.1em}
+p{margin:0}
+.dim{color:#cdbb97;font-size:19px}
+/* title */
+.title{align-items:center;text-align:center;justify-content:center;gap:22px}
+.btn{font-family:var(--body);font-weight:600;font-size:18px;background:var(--clay);color:var(--ink);border:0;padding:12px 16px;cursor:pointer;box-shadow:inset -4px -4px 0 var(--bronze),inset 4px 4px 0 var(--slip)}
+.btn:hover:not(:disabled){background:var(--slip)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn:focus-visible,.tab:focus-visible,.pip:focus-visible{outline:3px solid var(--slip);outline-offset:3px}
+.quote{max-width:620px;font-size:22px;color:#cdbb97}
+/* panels */
+.box{background:var(--glaze);border:3px solid var(--bronze);padding:16px 18px}
+.box.cl{background:var(--slip);color:var(--ink);border-color:var(--terra-d)}
+.cap{font-family:var(--body);font-weight:600;font-size:17px;color:var(--clay);letter-spacing:.06em;margin-bottom:8px;line-height:1.6}
+.cl .cap{color:var(--terra-d)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.split{display:grid;gap:18px;grid-template-columns:232px 1fr;align-items:start}
+@media(max-width:700px){.split{grid-template-columns:1fr}.inner{padding:18px 16px}}
+.sprite{display:block;margin:0 auto;background:var(--terra);border:4px solid var(--bronze);width:232px;height:272px;image-rendering:pixelated}
+.stats{display:grid;gap:8px;font-size:22px}
+.stats div{display:grid;grid-template-columns:150px 1fr;gap:12px}
+.stats b{font-family:var(--body);font-weight:600;font-size:16px;color:var(--bronze);padding-top:5px}
+/* tabs */
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font-family:var(--body);font-weight:600;font-size:17px;background:var(--glaze);color:var(--clay);border:3px solid var(--bronze);padding:9px 12px;cursor:pointer;line-height:1.5}
+.tab[aria-selected="true"]{background:var(--clay);color:var(--ink)}
+.panel{display:flex;flex-direction:column;gap:14px}
+/* quote bubbles */
+.say{background:var(--slip);color:var(--ink);border:3px solid var(--terra-d);padding:12px 16px;position:relative;font-size:25px}
+/* quest callout */
+.quest{margin-top:auto;border:3px solid var(--clay);background:var(--terra-d);padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.quest b{font-family:var(--body);font-weight:600;font-size:16px;color:var(--clay);letter-spacing:.08em}
+.quest span{font-size:27px;color:var(--slip);font-weight:600}
+/* map */
+.route{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.route .tab{padding:9px 10px}
+.arrow{font-family:var(--body);font-weight:600;font-size:17px;color:var(--bronze)}
+/* script */
+.script{background:var(--slip);color:var(--ink);border:4px solid var(--glaze);padding:20px 22px;font-family:'Courier New',Courier,monospace;font-size:20px;line-height:1.5;display:flex;flex-direction:column;gap:12px;max-height:min(56vh,460px);overflow-y:auto;scrollbar-width:auto;scrollbar-color:var(--terra) var(--clay)}
+.script>*{flex:none}
+.script .slug{font-weight:700;text-transform:uppercase}
+.script .who{text-align:center;font-weight:700;margin-top:6px}
+.script .line{max-width:420px;margin-inline:auto}
+.script .par{max-width:480px;margin-inline:auto;text-align:center;font-style:italic}
+/* sprites */
+.pane{background:var(--terra);border:4px solid var(--bronze);padding:10px 14px;display:flex;gap:10px;align-items:flex-end;flex:none;max-width:100%}
+.pane canvas{display:block;image-rendering:pixelated}
+@media(max-width:480px){.pane canvas{zoom:.8}}
+.duo{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.duo p{flex:1;min-width:240px}
+.hdr{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+/* sand strip with crabs */
+.sand{position:relative;height:40px;border-top:3px solid var(--bronze);margin:0 -28px -28px;background:var(--glaze);overflow:hidden}
+.crab{position:absolute;bottom:4px;width:48px;height:32px;image-rendering:pixelated;cursor:pointer;transition:left 2.4s steps(14),transform .2s steps(2)}
+.crab.hop{transform:translateY(-14px)}
+@media(max-width:700px){.sand{margin:0 -16px -18px}}
+/* nav */
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.pip{width:18px;height:18px;border:3px solid var(--bronze);background:var(--glaze);padding:0;cursor:pointer}
+.pip[aria-current="true"]{background:var(--clay)}
+</style>
+</head>
+<body>
+
+<div class="cab">
+  <div class="meander" aria-hidden="true"></div>
+  <div class="hud"><span>THETIS</span><span id="stage">START</span></div>
+  <div class="frame"><div class="inner">
+
+  <!-- 1 TITLE -->
+  <section class="screen title" data-name="START">
+    <p class="eyebrow">COMPANION PROFILE</p>
+    <h1>THETIS</h1>
+    <canvas id="hero" width="28" height="33" class="sprite hero" aria-label="Pixel sprite of Thetis, barefoot, with long dark hair, holding a seashell"></canvas>
+    <p class="quote">“In my mind are all the tides, their seasons, their ebbs and their flows. In my mind are all the halls, the endless procession of them, the intricate pathways.”<br><span class="dim">Susanna Clarke, Piranesi</span></p>
+    <button class="btn" data-go="1">PRESS START</button>
+  </section>
+
+  <!-- 2 SUMMARY -->
+  <section class="screen" data-name="SUMMARY" hidden>
+    <p class="eyebrow">STAGE 1</p><h2>Summary</h2>
+    <div class="split">
+      <canvas class="sprite hero" width="28" height="33" aria-hidden="true"></canvas>
+      <div class="box">
+        <p>A daughter of the ocean, said to hold shapeshifting and sight. She spent her life sheltering others and dodging gods, then hid in Limenos cave so long she built her own cage. In Attica, she learns to stop complying and start choosing.</p>
+      </div>
+    </div>
+    <div class="box">
+      <div class="cap">PERSONAL DETAILS</div>
+      <div class="stats">
+        <div><b>AGE</b><span>Unclear, timeless</span></div>
+        <div><b>ORIGIN</b><span>Unclear, from the ocean</span></div>
+        <div><b>JOB</b><span>Protector of people/gods</span></div>
+        <div><b>ARCHETYPE</b><span>Oracle, shapeshifter, fosterer of the fallen</span></div>
+        <div><b>AT A GLANCE</b><span>ancient, guarded, questioning</span></div>
+      </div>
+    </div>
+    <div class="quest"><b>IN-GAME CALLOUT</b><span>Thetis is Passenger, Finally Choosing Her Own Direction</span></div>
+  </section>
+
+  <!-- 3 INSPIRATIONS -->
+  <section class="screen" data-name="INSPIRATIONS" hidden>
+    <p class="eyebrow">STAGE 2</p><h2>Inspirations</h2>
+    <div class="tabs" role="tablist" data-g="insp">
+      <button class="tab" role="tab" aria-selected="true" data-p="i1">INVENTORY</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="i2">PLAYER STATEMENTS</button>
+    </div>
+    <div class="panel" id="i1">
+      <div class="grid">
+        <div class="box"><div class="cap">PIRANESI</div>A calm, curious narrator uncovering their own tragedy.</div>
+        <div class="box"><div class="cap">CIRCE</div>Transformation as self-discovery, not self-loss.</div>
+        <div class="box"><div class="cap">SONG OF THE SEA</div>Meeting a strange world with curiosity instead of fear.</div>
+        <div class="box"><div class="cap">RAPUNZEL</div>Long isolation, but Thetis is ancient and knowing.</div>
+        <div class="box"><div class="cap">PROFESSOR TRELAWNEY</div>Spacey, with rare moments where power unmistakably takes over.</div>
+        <div class="box"><div class="cap">THE INCREDIBLE HULK</div>Early comics: he didn’t know he changed.</div>
+      </div>
+    </div>
+    <div class="panel" id="i2" hidden>
+      <div class="say">“I don’t really know what’s going on with this woman, but she seems like someone I want to have my back.”</div>
+      <div class="say">“Her version of time is really making me question what’s actually happening.”</div>
+      <div class="say">“Thetis learning to trust herself really helped me realize I need to trust my own instincts more.”</div>
+    </div>
+    <div class="quest"><b>IN-GAME CALLOUT</b><span>Charming, Curious, and Quietly Cosmic</span></div>
+  </section>
+
+  <!-- 4 ROMANCE -->
+  <section class="screen" data-name="ROMANCE" hidden>
+    <p class="eyebrow">STAGE 3</p><h2>Romance</h2>
+    <div class="tabs" role="tablist" data-g="rom">
+      <button class="tab" role="tab" aria-selected="true" data-p="r1">PATH: THESEUS</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="r2">PATH: PERSEPHONE</button>
+    </div>
+    <div class="panel" id="r1">
+      <div class="duo"><div class="pane"><canvas class="spr" data-s="theseus" data-sc="6" role="img" aria-label="Pixel sprite of Theseus"></canvas><canvas class="spr" data-s="heart" data-sc="4" style="align-self:center" role="img" aria-label="Pixel heart"></canvas><canvas class="spr" data-s="thetis" data-sc="5" role="img" aria-label="Pixel sprite of Thetis"></canvas></div><p>Slow and steady. She’s spent so long being pursued that she’s wary at first.</p></div>
+      <div class="grid">
+        <div class="box"><div class="cap">MEET</div>She takes him for Poseidon’s man. He asks what she wants and offers a place in the group, not a prize.</div>
+        <div class="box"><div class="cap">DEVELOPS</div>Small, unglamorous travel moments. He treats her with respect, and she helps him unburden.</div>
+        <div class="box"><div class="cap">CONFLICT</div>She senses his hubris heading somewhere dangerous and must choose whether to act.</div>
+        <div class="box"><div class="cap">RESOLUTION</div>Respecting his agency is its own form of love, even if it doesn’t end well.</div>
+      </div>
+      <div class="quest"><b>IN-GAME CALLOUT</b><span>Thetis x Theseus is a Comfort in Companionship Romance</span></div>
+    </div>
+    <div class="panel" id="r2" hidden>
+      <div class="duo"><div class="pane"><canvas class="spr" data-s="persephone" data-sc="5" role="img" aria-label="Pixel sprite of Persephone"></canvas><canvas class="spr" data-s="heart" data-sc="4" style="align-self:center" role="img" aria-label="Pixel heart"></canvas><canvas class="spr" data-s="thetis" data-sc="5" role="img" aria-label="Pixel sprite of Thetis"></canvas></div><p>They see themselves in each other, both pushed by forces out of their control.</p></div>
+      <div class="grid">
+        <div class="box"><div class="cap">MEET</div>Persephone is furious at the cult and at Thetis’s hiding. Thetis is intimidated by her independence.</div>
+        <div class="box"><div class="cap">DEVELOPS</div>Claiming space doesn’t cost empathy. Protecting yourself isn’t weakness.</div>
+        <div class="box"><div class="cap">CONFLICT</div>Persephone’s impatience meets Thetis’s longer view of time. They balance each other.</div>
+        <div class="box"><div class="cap">RESOLUTION</div>Thetis fights for her anyway. Persephone learns trust means meeting someone where they’re at.</div>
+      </div>
+      <div class="quest"><b>IN-GAME CALLOUT</b><span>Thetis x Persephone is an All Parts, Even the Messy Ones Romance</span></div>
+    </div>
+  </section>
+
+  <!-- 5 COMBAT -->
+  <section class="screen" data-name="COMBAT" hidden>
+    <p class="eyebrow">STAGE 4</p><h2>Combat Themes</h2>
+    <div class="duo"><div class="pane"><canvas class="spr" data-s="dragon" data-sc="5" role="img" aria-label="Pixel sprite of a sea dragon"></canvas></div><p>A protector. Her power is dormant and surfaces under specific conditions, since she doesn’t fully know what she can do.</p></div>
+    <div class="grid">
+      <div class="box"><div class="cap">BOON AND BANE</div>A surge, a lull, then a surge again.</div>
+      <div class="box"><div class="cap">WARNING CALLS</div>“Something’s coming,” just before an attack lands.</div>
+      <div class="box"><div class="cap">PREFIGHT BUFFS</div>Foreknowledge gives insight on enemies.</div>
+      <div class="box"><div class="cap">SENSE AND PING</div>She hears movement through walls and fog. Sharp ears, deniably.</div>
+      <div class="box"><div class="cap">LUCK</div>For other characters on the team.</div>
+      <div class="box"><div class="cap">SUMMON</div>Her song draws crabs, nautiloids, seals. They just show up.</div>
+      <div class="box"><div class="cap">SEA DRAGON</div>First seen as an enemy. The change is never shown, only the water and the creature left behind.</div>
+    </div>
+    <div class="quest"><b>IN-GAME CALLOUT</b><span>Thetis Brings The Appearance of Magic to Mundane Moments</span></div>
+  </section>
+
+  <!-- 6 ARC -->
+  <section class="screen" data-name="ARC" hidden>
+    <p class="eyebrow">STAGE 5</p><h2>Character Arc</h2>
+    <p class="say" style="font-family:var(--body);font-weight:600;font-size:22px;line-height:1.5">Enneagram type: 9w1 - The peacemaker and reformer</p>
+    <div class="tabs" role="tablist" data-g="arc">
+      <button class="tab" role="tab" aria-selected="true" data-p="a1">STATS</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="a2">INTERNAL ARC</button>
+      <button class="tab" role="tab" aria-selected="false" data-p="a3">EXTERNAL ARC</button>
+    </div>
+    <div class="panel" id="a1">
+      <div class="grid">
+        <div class="box"><div class="cap">GOAL</div>Seize agency and stop being a passive observer of her own life.</div>
+        <div class="box"><div class="cap">OBSTACLE</div>Her last real choice, refusing a god, was punished. Every choice since feels like the same mistake.</div>
+        <div class="box"><div class="cap">STRENGTHS</div>Deep intuition, foreknowledge, fierce protectiveness.</div>
+        <div class="box"><div class="cap">WEAKNESS</div>A paralyzing habit of compliance. She uses foresight as a reason to accept fate.</div>
+      </div>
+    </div>
+    <div class="panel" id="a2" hidden>
+      <div class="box">She stops hiding from her intuition and becomes decisive. Travelling with the protagonist, she gets the response she never had, a simple “Okay, no problem,” and learns that choosing doesn’t have to end a relationship. She has to choose anyway, and survive being the reason someone is disappointed.</div>
+    </div>
+    <div class="panel" id="a3" hidden>
+      <div class="box">She digs her heels in against threats instead of hiding. She calls out danger before it lands and listens for what the party can’t see.</div>
+    </div>
+    <div class="quest"><b>IN-GAME CALLOUT</b><span>Thetis Takes Control of Her Foretold Futures</span></div>
+  </section>
+
+  <!-- 7 PLOT -->
+  <section class="screen" data-name="PLOT" hidden>
+    <p class="eyebrow">STAGE 6</p><h2>Plot Outline</h2>
+    <div class="route tabs" role="tablist" data-g="plot">
+      <button class="tab" role="tab" aria-selected="true" data-p="p1">ARGOLIS</button><span class="arrow">&gt;</span>
+      <button class="tab" role="tab" aria-selected="false" data-p="p2">CORINTHIA</button><span class="arrow">&gt;</span>
+      <button class="tab" role="tab" aria-selected="false" data-p="p3">MEGARA</button><span class="arrow">&gt;</span>
+      <button class="tab" role="tab" aria-selected="false" data-p="p4">DELPHI</button><span class="arrow">&gt;</span>
+      <button class="tab" role="tab" aria-selected="false" data-p="p5">ATTICA</button>
+    </div>
+    <div class="panel" id="p1">
+      <div class="pane" style="align-self:flex-start"><canvas class="spr" data-s="dragon" data-sc="4" role="img" aria-label="Pixel sprite of a sea dragon"></canvas></div>
+      <div class="box"><div class="cap">LIMENOS CAVE</div>First encounter and boss fight. The party comes for the Pearl and she takes them for Poseidon’s men. After the fight, the protagonist doesn’t claim her, they ask what she wants, and she chooses to leave with them.</div>
+    </div>
+    <div class="panel" id="p2" hidden><div class="box"><div class="cap">CORINTHIA/ISTHMUS</div>Tests her new agency and curiosity about the world.</div></div>
+    <div class="panel" id="p3" hidden><div class="box"><div class="cap">MEGARA</div>A vision comes true, helping her trust her own intuition.</div></div>
+    <div class="panel" id="p4" hidden><div class="duo"><div class="pane"><canvas class="spr" data-s="tripod" data-sc="8" role="img" aria-label="Pixel sprite of an oracle's tripod"></canvas></div><div class="box" style="flex:1;min-width:240px"><div class="cap">DELPHI</div>She consults the oracle about her visions.</div></div></div>
+    <div class="panel" id="p5" hidden>
+      <div class="box"><div class="cap">ATTICA/ATHENS</div>Medea makes her move. Thetis steps in, using her foreknowledge to change an outcome instead of just witnessing it.</div>
+      <div class="box cl"><div class="cap">EPILOGUE</div>She chooses instead of complying. A vision shows a son yet to come, and a mortal man she will love and eventually leave.</div>
+    </div>
+    <div class="quest"><b>IN-GAME CALLOUT</b><span>Attica Shows Thetis Choosing to Act, No Longer Just a Witness</span></div>
+  </section>
+
+  <!-- 8 MYTHIC -->
+  <section class="screen" data-name="MYTHIC THREADS" hidden>
+    <div class="hdr"><div><p class="eyebrow">STAGE 7</p><h2>Mythic Threads</h2></div><div class="pane"><canvas class="spr" data-s="argo" data-sc="4" role="img" aria-label="Pixel sprite of the Argo"></canvas></div></div>
+    <div class="grid">
+      <div class="box"><div class="cap">SHAPESHIFTER</div>Fire, water, lion, serpent, cuttlefish.</div>
+      <div class="box"><div class="cap">FLUID IDENTITY</div>A secondary, shifting figure across her own myths.</div>
+      <div class="box"><div class="cap">FOREKNOWLEDGE</div>In the Iliad she knows Achilles will die young and tries anyway.</div>
+      <div class="box"><div class="cap">GOD FAVORS</div>Fostered by Hera, she refuses Zeus out of loyalty.</div>
+      <div class="box"><div class="cap">PURSUED BY GODS</div>Zeus and Poseidon pursue her until the prophecy about her son.</div>
+      <div class="box"><div class="cap">SEEN AT SEA</div>In the Argonautica, she and the Nereids guide the Argo past Scylla and Charybdis.</div>
+    </div>
+    <div class="quest"><b>IN-GAME CALLOUT</b><span>Ancient Myths Make a Mortal of Mystery</span></div>
+  </section>
+
+  <!-- 9 VIGNETTE -->
+  <section class="screen" data-name="VIGNETTE" hidden>
+    <div class="hdr"><div><p class="eyebrow">FINAL SCENE</p><h2>Vignette</h2></div><div class="pane"><canvas class="spr" data-s="thetis" data-sc="4" role="img" aria-label="Pixel sprite of Thetis"></canvas></div></div>
+    <div class="script">
+      <p class="slug">EXT./INT. Limenos Cave Entrance - Sunset</p>
+      <p class="par">She squishes her bare toes in the wet sand and an unexpected laugh bubbles up, surprising even her.</p>
+      <p class="who">THETIS</p>
+      <p class="line">I’ve never even seen what’s beyond that road. Passing fishermen talk about a market three days north. Loud, bright, impossible to hear yourself think. I think it sounds wonderful.</p>
+      <p class="par">She steps off the sand and onto the road, barefoot, only looking back to see if the playable character is following.</p>
+      <p class="who">THETIS</p>
+      <p class="line">(Looks to the ocean, talks almost to herself) Well, I have been feeling this… calling. Outside of the cave. I have so many questions I need answers to.</p>
+      <p class="who">PC</p>
+      <p class="line">Calling?</p>
+      <p class="who">THETIS</p>
+      <p class="line">It’s like a tide pulling something in me I haven’t felt in a long time. I can’t tell if I’m remembering something from long ago, or if it hasn’t happened yet… (beat) From here it feels the same. (beat, features darkening) But I know it isn’t in this cave.</p>
+    </div>
+    <p class="dim">Scroll the script to read on. Trimmed excerpt; the full scene is in the profile.</p>
+  </section>
+
+  <div class="sand" id="sand" aria-hidden="true"></div>
+  </div></div>
+  <div class="nav" id="nav">
+    <button class="btn" id="back">&lt; BACK</button>
+    <div class="pips" id="pips" role="tablist" aria-label="Stages"></div>
+    <button class="btn" id="next">NEXT &gt;</button>
+  </div>
+  <div class="meander" aria-hidden="true"></div>
+</div>
+
+<script>
+(function(){
+  var screens=[].slice.call(document.querySelectorAll('.screen'));
+  var stage=document.getElementById('stage'),pips=document.getElementById('pips');
+  var back=document.getElementById('back'),next=document.getElementById('next');
+  var cur=0;
+  screens.forEach(function(s,i){
+    var p=document.createElement('button');p.className='pip';p.setAttribute('aria-label',s.dataset.name);p.title=s.dataset.name;
+    p.addEventListener('click',function(){show(i)});pips.appendChild(p);
+  });
+  function show(i,skipHash){
+    cur=Math.max(0,Math.min(screens.length-1,i));
+    screens.forEach(function(s,j){s.hidden=j!==cur});
+    [].forEach.call(pips.children,function(p,j){p.setAttribute('aria-current',j===cur?'true':'false')});
+    stage.textContent=screens[cur].dataset.name;
+    back.disabled=cur===0;next.disabled=cur===screens.length-1;
+    document.getElementById('nav').hidden=cur===0;
+    if(!skipHash){try{history.replaceState(null,'','#s'+cur)}catch(e){try{location.hash='s'+cur}catch(_){}}}
+    window.scrollTo(0,0);
+  }
+  back.addEventListener('click',function(){show(cur-1)});
+  next.addEventListener('click',function(){show(cur+1)});
+  document.querySelector('[data-go]').addEventListener('click',function(){show(1)});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight')show(cur+1);else if(e.key==='ArrowLeft')show(cur-1);
+  });
+  // tabs
+  [].forEach.call(document.querySelectorAll('.tabs[data-g]'),function(g){
+    var tabs=[].slice.call(g.querySelectorAll('.tab'));
+    tabs.forEach(function(t){t.addEventListener('click',function(){
+      tabs.forEach(function(o){
+        var on=o===t;o.setAttribute('aria-selected',on?'true':'false');
+        document.getElementById(o.dataset.p).hidden=!on;
+      });
+    })});
+  });
+  // sprite: plain robe, bare feet, holding a seashell
+  var rows=[
+    '............................',
+    '........KKKKKKKK............',
+    '.......KhhhhhhhhK...........',
+    '......KhhHHHhhhhhK..........',
+    '.....KhhHHhhhhhhhhK.........',
+    '....KhhhhsssssshhhhK........',
+    '....KhhsssssssssshhK........',
+    '....KhhssKssssKsshhK........',
+    '....KhhspsssssspshhK........',
+    '....KhhssssSSsssshhK........',
+    '......KhhsssssshhK..........',
+    '......KhhhSSSShhhK..........',
+    '....KHhhhcccccchhhhK........',
+    '....KhhhhcCcccChhhhK........',
+    '...KHhssCccccccCsshhK.......',
+    '...KhhssccccccccsshhK.......',
+    '...KHhssccccccccsshhK.......',
+    '....KhssBbbbbbbBsshK...d....',
+    '....KHssccccccccsshKssdpd...',
+    '....KhhccCccccCcchhKsdpwpd..',
+    '....KHccCccccccCcchK.dwpwd..',
+    '....KhccCccccccCcchK..ddd...',
+    '....KccCccccccccCccK........',
+    '....KccCccccccccCccK........',
+    '....KccCccccccccCccK........',
+    '....KccCccccccccCccK........',
+    '....KBbBbBbBbBbBbBbK........',
+    '....KKKKKKKKKKKKKKKK........',
+    '......KssK....KssK..........',
+    '......KssK....KssK..........',
+    '.....KssssK..KssssK.........',
+    '.....KKKKKK..KKKKKK.........',
+    '............................'];
+  // 16-bit palette: dark brown long hair with highlights, shaded skin and robe, bronze belt and hem, pink seashell
+  var pal={K:'#1a1411',h:'#3b2a22',H:'#60442f',s:'#d8a56f',S:'#b9824f',p:'#e8a99a',c:'#ecdcbb',C:'#c9b690',b:'#b98a45',B:'#8a6430',d:'#7d3a1f',w:'#f6ecd8'};
+  [].forEach.call(document.querySelectorAll('canvas.hero'),function(cv){
+    var c=cv.getContext('2d');
+    rows.forEach(function(r,y){for(var x=0;x<28;x++){var ch=r[x];if(pal[ch]){c.fillStyle=pal[ch];c.fillRect(x,y,1,1)}}});
+  });
+  // extra sprites
+  var SPR={"theseus":{"p":{"K":"#1a1411","h":"#2e2118","H":"#4a3526","s":"#d8a56f","S":"#b9824f","t":"#b8603a","T":"#8f4325","b":"#b98a45","B":"#8a6430","l":"#7d5a3a","g":"#b9bdb8","G":"#e8e6dc"},"r":["..............................","........KKKKKKKK..............",".......KhhhHhhhhK....KK.......","......KhHhhhhhhhhK...KK.......","......KhhsssssshhK..KGgK......","......KhssKssKsshK..KGgK......","......KhsssssssshK..KGgK......","......KhsssSSssshK..KGgK......",".......KssssssssK...KGgK......","........KKSSSSKK....KGgK......",".....KssttTtttTtssK.KGgK......",".....KssttttttttssK.KGgK......",".....KssttttttttssK.KGgK......",".....KssttttttttssK.KGgK......",".....KssttttttttssK.KGgK......",".....KssBbbbbbbBssK.KGgK......",".....KssttTttTttssKKKGgKKK....",".....KttTtttttTtttKBBBBBBK....",".....KttTtttttTtttKssllKK.....",".....KBbBbBbBbBbBbKssllK......",".....KKKKKKKKKKKKKK.KbbK......","......KssK....KssK...KK.......","......KssK....KssK............","......KssK....KssK............","......KssK....KssK............","......KsSK....KsSK............","......KssK....KssK............","....KlssslK..KlssslK..........","...KllllllK..KllllllK.........","....KKKKKKK..KKKKKKK..........",".............................."]},"persephone":{"p":{"K":"#1a1411","h":"#5a2f22","H":"#8a4b30","s":"#d8a56f","S":"#b9824f","p":"#e8a99a","c":"#a9b27e","C":"#7f8a58","b":"#c9a24b","B":"#8a6430","d":"#7d3a1f","w":"#f6ecd8","F":"#e8a99a","G":"#7f8a58","r":"#a8322d","R":"#d8604a"},"r":["............................","........KKKKKKKK............",".......KFhGhFhGhK...........","......KGhHHHhhhhFK..........",".....KhhHHhhhhhhhhK.........","....KhhhhsssssshhhhK........","....KhhsssssssssshhK........","....KhhssKssssKsshhK........","....KhhspsssssspshhK........","....KhhssssSSsssshhK........","......KhhsssssshhK..........","......KhhhSSSShhhK..........","....KHhhhcccccchhhhK........","....KhhhhcCcccChhhhK........","...KHhssCccccccCsshhK.......","...KhhssccccccccsshhK.......","...KHhssccccccccsshhK.......","....KhssBbbbbbbBsshK....K...","....KHssccccccccsshKsssKrK..","....KhhccCccccCcchhKssKrRrK.","....KHccCccccccCcchK..KrrrK.","....KhccCccccccCcchK...KKK..","....KccCccccccccCccK........","....KccCccccccccCccK........","....KccCccccccccCccK........","....KccCccccccccCccK........","....KBbBbBbBbBbBbBbK........","....KKKKKKKKKKKKKKKK........","......KssK....KssK..........","......KssK....KssK..........",".....KssssK..KssssK.........",".....KKKKKK..KKKKKK.........","............................"]},"dragon":{"p":{"K":"#1a1411","g":"#5b7a72","l":"#cfc59c","f":"#b98a45","m":"#7d3a1f","e":"#ecdcbb","E":"#1a1411"},"r":["............K...............................","...........KfK..............................","..........KfK...............................","........KKfK.K..............................",".......KfKK.KfK.............................",".......KgggKKffK............................","....KKKggggggggfK...........................","..KKggggeEggggggK...........................",".KgggggggggggggggK..........................","KgggggggggggggggggK.........................","KmmmmmggggggllllggK.........................",".KlllllKlgglllllgggK.......K................","..KKKKK.KKKlllllllggK....KKfK...............","...........KllllllgggK.KKfKffK.......K......","...........KlllllllggKKfKfKKfKK....KKfK.....","............KlllllllggffKKgggKfKKKKfKffKK...",".............KllllllgggKgggggggKffKfKgfKfK..",".............KlllllllgggggggggggffKggggKfK.K","..............KlllllllggggggggggggggggggKfKf","..............KllllllllggggggggggggglllggffK","...............KllllllllllllllllglllllllggKf","................KllllllllllllllllllllKKlllgf",".................KllllllllllllllllllK..KKlfK","..................KllllllllKKKlllllK.....KKf","...................KlllllKK...KKlKK........K","....................KKlKK.......K...........","......................K.....................","............................................"]},"argo":{"p":{"K":"#1a1411","w":"#ecdcbb","c":"#d9c9a0","t":"#a9512c","h":"#7d5a3a","H":"#b98a45","s":"#5b7a72","S":"#3f5a54"},"r":["..................................","................KKKKK.............","...............KwttttK............","........KKKKKKKKwKKKKKKKK.........",".......KccccccccwccccccccK........",".......KccccccccwccccccccK........",".......KccccccccwccccccccK........",".......KttttttttwttttttttK........",".......KttttttttwttttttttK........",".......KccccccccwccccccccK........",".......KccccccccwccccccccK........",".......KccccccccwccccccccK........",".......KccccccccwccccccccK........",".......KccccccccwccccccccK........",".......KccccccccwccccccccK........","........KKKKKKKKwKKKKKKKK.........","...............KwK................","..KKKKKKKKKKKKKKwKKKKKKKKKKKKKKK..",".KHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHK.","..KKhhhhhhhhhhhhhhhhhhhhhhhhhhKK..","....KKKhhhhhhhhhhhhhhhhhhhhKKK....","......KwKKKwKKKwKKKwKKKwKKKwK.....",".....KwK.KwK.KwK.KwK.KwK.KwK......","......K...K...K...K...K...K.......","ssSSssSSssSSssSSssSSssSSssSSssSSss","SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"]},"tripod":{"p":{"K":"#1a1411","f":"#a9512c","F":"#d8a56f","b":"#b98a45","B":"#8a6430"},"r":[".......ff.......","......fFFf......",".....fFFFFf.....","......fFFf......",".....KKKKKK.....","...KKbbbbbbKK...","..KbBbbbbbbBbK..","..KbbbbbbbbbbK..","...KbbBBBBbbK...","....KKbbbbKK....",".....KBbbBK.....","....K.KBBK.K....","...K..K..K..K...","...K..K..K..K...","..K...K..K...K..","..K..........K..",".KK..........KK."]}};
+  SPR.thetis={p:pal,r:rows};
+  SPR.heart={p:{K:'#1a1411',r:'#c0392b',R:'#e8a99a'},r:['..KKK.KKK..','.KrrrKrrrK.','KrRrrrrrrrK','KrRrrrrrrrK','KrrrrrrrrrK','.KrrrrrrrK.','..KrrrrrK..','...KrrrK...','....KrK....','.....K.....']};
+  [].forEach.call(document.querySelectorAll('canvas.spr'),function(cv){
+    var d=SPR[cv.dataset.s];if(!d)return;
+    var h=d.r.length,w=d.r[0].length,sc=+cv.dataset.sc||5;
+    cv.width=w;cv.height=h;cv.style.width=(w*sc)+'px';cv.style.height=(h*sc)+'px';
+    var x=cv.getContext('2d');
+    d.r.forEach(function(r,y){for(var i=0;i<w;i++){var ch=r[i];if(d.p[ch]){x.fillStyle=d.p[ch];x.fillRect(i,y,1,1)}}});
+  });
+  // crabs
+  var crabRows=['tt........tt','tt..k..k..tt','.tt.tttt.tt.','..tttttttt..','.tttttttttt.','..tttttttt..','.t.t.tt.t.t.','t..t....t..t'];
+  var cpal={t:'#d2603a',k:'#ece5d0'};
+  var crabCv=document.createElement('canvas');crabCv.width=12;crabCv.height=8;
+  (function(){var c=crabCv.getContext('2d');crabRows.forEach(function(r,y){for(var x=0;x<12;x++){var ch=r[x];if(cpal[ch]){c.fillStyle=cpal[ch];c.fillRect(x,y,1,1)}}})})();
+  var sand=document.getElementById('sand'),timer=null;
+  var still=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function spawnCrabs(){
+    clearInterval(timer);sand.innerHTML='';
+    var n=1+Math.floor(Math.random()*3),w=sand.clientWidth||600,list=[];
+    for(var i=0;i<n;i++){
+      var k=document.createElement('canvas');k.width=12;k.height=8;k.className='crab';
+      k.getContext('2d').drawImage(crabCv,0,0);
+      var sc=0.8+Math.random()*0.5;k.style.width=(48*sc)+'px';k.style.height=(32*sc)+'px';
+      k.style.left=Math.random()*(w-60)+'px';
+      k.addEventListener('click',function(e){var t=e.currentTarget;t.classList.add('hop');setTimeout(function(){t.classList.remove('hop')},250)});
+      sand.appendChild(k);list.push(k);
+    }
+    if(!still)timer=setInterval(function(){
+      var k=list[Math.floor(Math.random()*list.length)],W=sand.clientWidth||600;
+      if(k)k.style.left=Math.max(0,Math.min(W-56,parseFloat(k.style.left)+(Math.random()*160-80)))+'px';
+    },1600);
+  }
+  var _show=show;show=function(i,h){_show(i,h);spawnCrabs()};
+  var m=/^#s(\d+)$/.exec(location.hash);
+  show(m?+m[1]:0,true);
+})();
+</script>
+
+</body>
+</html>
